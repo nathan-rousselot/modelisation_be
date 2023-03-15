@@ -59,8 +59,8 @@ while (i <= nb_images)
     i = i +1;
 end 
 
-K = 100;
-lambda = 0.2;
+K = 200;
+lambda = 1;
 im_mat(:,1:3) = im_mat(:,1:3).*(S/(lambda*K));
 [idx,C] = kmeans(im_mat(:,:,1),K);
 superpixels = reshape(idx,size(im(:,:,1,1)'));
@@ -73,7 +73,6 @@ im_bin=zeros(m,n);
 for i=1:1:m
     for j=1:1:n
         im_rec(i,j,:)=((lambda*K)/S)*fix(C(superpixels(i,j),1:3))/255;
-        im_bin(i,j) = im_rec(i,j,1)-im_rec(i,j,3) > 0;
     end
 end
 
@@ -81,19 +80,35 @@ end
 
 
 
-figure
-% imshow(im_rec)
-mask = boundarymask(superpixels);
-maskbin = bwboundary(im_bin);
-
+%figure
+%imshow(im_rec)
+%mask = boundarymask(superpixels);
+% 
 % hold on
-subplot(121)
-imshow(labeloverlay(im_rec,mask,'Transparency',0,'Colormap','autumn'))
-subplot(122)
-imshow(labeloverlay(im_bin,maskbin,'Transparency',0,'Colormap','autumn'))
+% imshow(labeloverlay(im_rec,mask,'Transparency',0,'Colormap','autumn'))
+
 % imshow(mask);
 
 % colormap hsv
+
+rp = regionprops(superpixels,'Area','Perimeter');
+compacite = [rp.Perimeter].^2./[rp.Area];
+seuil_compacite =0.1;
+superpixels_exterieurs = superpixels;
+superpixels_internes = superpixels;
+for i=1:length(compacite)
+    if compacite(i) < seuil_compacite
+        superpixels_exterieurs(superpixels_exterieurs == i) = 0;
+    else
+        superpixels_internes(superpixels_internes == i) = 0;
+    end
+end
+
+
+figure;
+subplot(1,3,1); imshow(im(:,:,:,1)); title('Image originale');
+subplot(1,3,2); imshow(superpixels_exterieurs, []); title('Régions extérieures');
+subplot(1,3,3); imshow(superpixels_internes, []); title('Régions intérieures');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % A COMPLETER                                             %
