@@ -135,19 +135,21 @@ imshow(im_bin)
 title('Image binarisée')
 hold on
 plot(B(:,2),B(:,1),'r');
+
 [vx,vy]= voronoi(B(:,2),B(:,1));
-%plot(voronoi(B(:,2),B(:,1)),'r');
+vx = vx(:)
+plot(voronoi(B(:,2),B(:,1)),'r');
 
 
 
-inside= inpolygon(vx,vy,[1 size(im_bin,2) size(im_bin,2) 1], [1 1 size(im_bin,1) size(im_bin,1)]);
-U = [];
-while i<length(inside)
-    if inside(i) && inside(i+1)
-        U = [U; vx(i) vy(i) vx(i+1) vy(i+1)];
-    end
-    i=i+1;
-end
+% inside= inpolygon(vx,vy,[1 size(im_bin,2) size(im_bin,2) 1], [1 1 size(im_bin,1) size(im_bin,1)]);
+% U = [];
+% while i<length(inside)
+%     if inside(i) && inside(i+1)
+%         U = [U; vx(i) vy(i) vx(i+1) vy(i+1)];
+%     end
+%     i=i+1;
+% end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

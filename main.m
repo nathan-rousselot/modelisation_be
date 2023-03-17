@@ -135,8 +135,22 @@ imshow(im_bin)
 title('Image binarisée')
 hold on
 plot(B(:,2),B(:,1),'r');
+
 [vx,vy]= voronoi(B(:,2),B(:,1));
-plot(voronoi(B(:,2),B(:,1)),'r');
+vx = vx(:);
+vy = vy(:);
+
+i = 1;
+while (i <= length(vx))
+    if (im_bin(vx(i),vy(i)) == 0)
+        vx(i) = [];
+        vy(i) = [];
+    else
+        i = i + 1;
+    end
+end
+
+plot(vx,vy,'r');
 
 
 
