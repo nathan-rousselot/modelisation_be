@@ -126,6 +126,9 @@ end
 [xc,yc] = find_pixel_contour(im_bin);
 B = bwtraceboundary(im_bin,[xc,yc],'S');
 
+B(:,1) = sgolayfilt(B(:,1),3,13);
+B(:,2) = sgolayfilt(B(:,2),3,13);
+
 figure
 subplot(121)
 imshow(im(:,:,:,1))
