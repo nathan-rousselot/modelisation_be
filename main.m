@@ -137,16 +137,16 @@ hold on
 plot(B(:,2),B(:,1),'r');
 
 [vx,vy]= voronoi(B(:,2),B(:,1));
-vx = vx(:);
-vy = vy(:);
 i = 1;
 while (i <= length(vx))
-    if (round(vx(i)) < 1 || round(vy(i)) < 1 || round(vx(i)) > n || round(vy(i)) > m)
-        vx(i) = [];
-        vy(i) = [];
-    elseif (im_bin(round(vy(i)),round(vx(i))) == 0 || is_perimeter(im_bin,round(vy(i)),round(vx(i))))
-        vx(i) = [];
-        vy(i) = [];
+    if (round(vx(1,i)) < 1 || round(vy(1,i)) < 1 || round(vx(1,i)) > n || round(vy(1,i)) > m ...
+            || round(vx(2,i)) < 1 || round(vy(2,i)) < 1 || round(vx(2,i)) > n || round(vy(2,i)) > m)
+        vx(:,i) = [];
+        vy(:,i) = [];
+    elseif (im_bin(round(vy(1,i)),round(vx(1,i))) == 0 || im_bin(round(vy(2,i)),round(vx(2,i))) == 0 ...
+        || is_perimeter(im_bin,round(vy(1,i)),round(vx(1,i))) || is_perimeter(im_bin,round(vy(2,i)),round(vx(2,i))))
+        vx(:,i) = [];
+        vy(:,i) = [];
     else 
         i = i + 1;
     end
