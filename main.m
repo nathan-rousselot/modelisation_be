@@ -139,19 +139,20 @@ plot(B(:,2),B(:,1),'r');
 [vx,vy]= voronoi(B(:,2),B(:,1));
 vx = vx(:);
 vy = vy(:);
-
 i = 1;
 while (i <= length(vx))
-    if (im_bin(vx(i),vy(i)) == 0)
+    if (round(vx(i)) < 1 || round(vy(i)) < 1 || round(vx(i)) > n || round(vy(i)) > m)
         vx(i) = [];
         vy(i) = [];
-    else
+    elseif (im_bin(round(vy(i)),round(vx(i))) == 0 || is_perimeter(im_bin,round(vy(i)),round(vx(i))))
+        vx(i) = [];
+        vy(i) = [];
+    else 
         i = i + 1;
     end
 end
 
-plot(vx,vy,'r');
-
+plot(vx,vy);
 
 
 % inside= inpolygon(vx,vy,[1 size(im_bin,2) size(im_bin,2) 1], [1 1 size(im_bin,1) size(im_bin,1)]);

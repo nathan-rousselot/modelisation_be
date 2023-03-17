@@ -1,5 +1,5 @@
 function b = is_perimeter(s,i,j,m,n)
-    if (nargin < 5)
+    if (nargin < 6)
         [m,n] = size(s);
     end
     if (i == 1)
