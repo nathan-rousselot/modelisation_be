@@ -2,7 +2,7 @@ clear;
 close all;
 clc;
 nb_images = 36; % Nombre d'images
-
+%%
 % chargement des images
 for i = 1:nb_images
     if i<=10
@@ -58,32 +58,34 @@ while (i <= nb_images)
 
     i = i +1;
 end 
-
-K = 200;
-lambda = 1;
-im_mat(:,1:3) = im_mat(:,1:3).*(S/(lambda*K));
-[idx,C] = kmeans(im_mat(:,:,1),K);
-superpixels = reshape(idx,size(im(:,:,1,1)'));
-superpixels = superpixels';
-
-im_rec=zeros(m,n,3);
-im_bin=zeros(m,n);
-
-
-for i=1:1:m
-    for j=1:1:n
-        im_rec(i,j,:)=((lambda*K)/S)*fix(C(superpixels(i,j),1:3))/255;
-%         im_bin(i,j) = 255*(int8(im_rec(i,j,1)>im_rec(i,j,3)));
+im_rec=zeros(m,n,3,nb_images);
+im_bin=zeros(m,n,nb_images);
+    
+z = 1;
+while (z <= nb_images) 
+    K = 200;
+    lambda = 1;
+    im_mat(:,1:3,z) = im_mat(:,1:3,z).*(S/(lambda*K));
+    [idx,C] = kmeans(im_mat(:,:,z),K);
+    superpixels = reshape(idx,size(im(:,:,1,1)'));
+    superpixels = superpixels';
+    
+    
+    
+    for i=1:1:m
+        for j=1:1:n
+            im_rec(i,j,:,z)=((lambda*K)/S)*fix(C(superpixels(i,j),1:3))/255;
+            im_bin(i,j,z) = 255*(int8(im_rec(i,j,1,z)>im_rec(i,j,3,z)));
+        end
     end
+    z = z+1;
 end
+%%
+%im_rec = permute(im_rec,[2 1 3]);
 
-% im_rec = permute(im_rec,[2 1 3]);
-
-
-% 
-% figure
-% imshow(im_rec)
-% mask = boundarymask(superpixels);
+figure
+imshow(im_rec)
+mask = boundarymask(superpixels);
 % 
 % hold on
 % imshow(labeloverlay(im_rec,mask,'Transparency',0,'Colormap','autumn'))
@@ -98,28 +100,28 @@ permietre_sp = permietre_superpixels(superpixels,K);
 % compacite = [rp.Perimeter].^2./[rp.Area];
 compacite = permietre_sp.^2./aires_sp;
 
-figure;
+%figure;
 
-T = 1;
-while (T <= max(compacite))
-    seuil_compacite=T;
-    superpixels_exterieurs = superpixels;
-    superpixels_internes = superpixels;
-    for i=1:length(compacite)
-        if compacite(i) < seuil_compacite
-            superpixels_exterieurs(superpixels_exterieurs == i) = 0;
-        else
-            superpixels_internes(superpixels_internes == i) = 0;
-        end
-    end
-    title(["T=", num2str(T)]);
-    subplot(1,3,1); imshow(im(:,:,:,1)); title(['Image originale, T=',T]);
-    subplot(1,3,2); imshow(superpixels_exterieurs, []); title('Régions extérieures');
-    subplot(1,3,3); imshow(superpixels_internes, []); title('Régions intérieures');
-    drawnow
-    pause(.2)
-    T = T + 0.1;
-end
+% T = 1;
+% while (T <= max(compacite))
+%     seuil_compacite=4;
+%     superpixels_exterieurs = superpixels;
+%     superpixels_internes = superpixels;
+%     for i=1:length(compacite)
+%         if compacite(i) < seuil_compacite
+%             superpixels_exterieurs(superpixels_exterieurs == i) = 0;
+%         else
+%             superpixels_internes(superpixels_internes == i) = 0;
+%         end
+%     end
+%     title(["T=", num2str(T)]);
+%     subplot(1,3,1); imshow(im(:,:,:,1)); title(['Image originale, T=',T]);
+%     subplot(1,3,2); imshow(superpixels_exterieurs, []); title('Régions extérieures');
+%     subplot(1,3,3); imshow(superpixels_internes, []); title('Régions intérieures');
+%     drawnow
+%     pause(.2)
+%     T = T + 0.1;
+% end
 
 BW = imbinarize(rgb2gray(im(:,:,:,1)),graythresh(im(:,:,:,1)));
 
@@ -136,26 +138,26 @@ title('Image originale')
 subplot(122)
 imshow(im_bin)
 title('Image binarisée')
-% hold on
-% plot(B(:,2),B(:,1),'r');
-% 
-% [vx,vy]= voronoi(B(:,2),B(:,1));
-% i = 1;
-% while (i <= length(vx))
-%     if (round(vx(1,i)) < 1 || round(vy(1,i)) < 1 || round(vx(1,i)) > n || round(vy(1,i)) > m ...
-%             || round(vx(2,i)) < 1 || round(vy(2,i)) < 1 || round(vx(2,i)) > n || round(vy(2,i)) > m)
-%         vx(:,i) = [];
-%         vy(:,i) = [];
-%     elseif (im_bin(round(vy(1,i)),round(vx(1,i))) == 0 || im_bin(round(vy(2,i)),round(vx(2,i))) == 0 ...
-%         || is_perimeter(im_bin,round(vy(1,i)),round(vx(1,i))) || is_perimeter(im_bin,round(vy(2,i)),round(vx(2,i))))
-%         vx(:,i) = [];
-%         vy(:,i) = [];
-%     else 
-%         i = i + 1;
-%     end
-% end
-% 
-% plot(vx,vy);
+hold on
+plot(B(:,2),B(:,1),'r');
+
+[vx,vy]= voronoi(B(:,2),B(:,1));
+i = 1;
+while (i <= length(vx))
+    if (round(vx(1,i)) < 1 || round(vy(1,i)) < 1 || round(vx(1,i)) > n || round(vy(1,i)) > m ...
+            || round(vx(2,i)) < 1 || round(vy(2,i)) < 1 || round(vx(2,i)) > n || round(vy(2,i)) > m)
+        vx(:,i) = [];
+        vy(:,i) = [];
+    elseif (im_bin(round(vy(1,i)),round(vx(1,i))) == 0 || im_bin(round(vy(2,i)),round(vx(2,i))) == 0 ...
+        || is_perimeter(im_bin,round(vy(1,i)),round(vx(1,i))) || is_perimeter(im_bin,round(vy(2,i)),round(vx(2,i))))
+        vx(:,i) = [];
+        vy(:,i) = [];
+    else 
+        i = i + 1;
+    end
+end
+
+plot(vx,vy);
 
 
 % inside= inpolygon(vx,vy,[1 size(im_bin,2) size(im_bin,2) 1], [1 1 size(im_bin,1) size(im_bin,1)]);
