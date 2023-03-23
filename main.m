@@ -21,6 +21,7 @@ subplot(2,2,1); imshow(im(:,:,:,1)); title('Image 1');
 subplot(2,2,2); imshow(im(:,:,:,9)); title('Image 9');
 subplot(2,2,3); imshow(im(:,:,:,17)); title('Image 17');
 subplot(2,2,4); imshow(im(:,:,:,25)); title('Image 25');
+%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % A COMPLETER                                             %
