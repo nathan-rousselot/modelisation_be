@@ -1,5 +1,7 @@
-
 function [cluster_idx, centroids] = kmeans1(X, K)
+%%% Fonction personelle kmeans. Utilise la norme l2 euclidienne pour le
+%%% calcul de la distance. Ne prend en compte que la position. Centroïdes
+%%% aléatoires.
 
 max_iter = 200;     
 tol = 1e-4;         

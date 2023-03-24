@@ -1,5 +1,10 @@
 close all;clear;clc
 
+%%% Démonstration de l'impact du filtrage du contour sur la qualité de
+%%% l'axe médian. On utilise ici un filtre de Savitzky-Golay avec une
+%%% fenêtre à taille variable.
+
+
 load("data\im.mat");
 load("data\im_bin.mat");
 load("data\im_rec.mat");

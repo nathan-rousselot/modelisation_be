@@ -1,8 +1,16 @@
 clear;
 close all;
 clc;
+
+%%% Cette fonction propose une implémentation complète de toutes les
+%%% fonctionnalités que nous avons développés. Toutefois, il ne montre pas
+%%% une démonstration complète. Nous invitons l'utilisateur à exécuter les
+%%% codes de demo pour comprendre plus en profondeur comment fonctionne les
+%%% différentes composantes du code.
+
+
+
 nb_images = 36; % Nombre d'images
-%%
 % chargement des images
 for i = 1:nb_images
     if i<=10
@@ -16,38 +24,27 @@ for i = 1:nb_images
 end;
 
 % Affichage des images
-figure; 
+figure('units','normalized','outerposition',[0 0 1 1]); 
 subplot(2,2,1); imshow(im(:,:,:,1)); title('Image 1');
 subplot(2,2,2); imshow(im(:,:,:,9)); title('Image 9');
 subplot(2,2,3); imshow(im(:,:,:,17)); title('Image 17');
 subplot(2,2,4); imshow(im(:,:,:,25)); title('Image 25');
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% A COMPLETER                                             %
-% Calculs des superpixels                                 % 
-% Conseil : afficher les germes + les régions             %
-% à chaque étape / à chaque itération                     %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% VECTORISATION
 
-% ........................................................%
 m = length(im(:,1,1,1));
 n = length(im(1,:,1,1));
-% N = size(im,1)*size(im,2);
 N = m*n;
 K = 12^2;
 S = round(sqrt(N/K));
 
-% cx1 = linspace(1,S/2,sqrt(K));
-% cx2 = linspace(1,S/2,sqrt(K));
-% cx = meshgrid(cx1,cx2);
-
 mv = 1:1:m;
 nv = 1:1:n;
-[X,Y] = meshgrid(mv,nv);
-cp = [X(:),Y(:)];
+[X,Y] = meshgrid(mv,nv); % Position des germes uniformément
+cp = [X(:),Y(:)]; % vectorisation
 im_mat = zeros(n*m,3,nb_images);
 i = 1;
-while (i <= nb_images)
+while (i <= nb_images) % mise en forme des données pour le kmeans de matlab
     Ir = im(:,:,1,i);
     Ig = im(:,:,2,i);
     Ib = im(:,:,3,i);
@@ -55,55 +52,76 @@ while (i <= nb_images)
     im_mat(:,2,i) = reshape(Ig',m*n,1);
     im_mat(:,3,i) = reshape(Ib',m*n,1);
     im_mat(:,4:5,i) = cp;
-
     i = i +1;
 end 
 
-z = 1;
-while (z <= nb_images) 
-    K = 200;
-    lambda = 1;
-    im_mat(:,1:3) = im_mat(:,1:3).*(S/(lambda*K));
-    [idx,C] = kmeans(im_mat(:,:,1),K);
-    superpixels = reshape(idx,size(im(:,:,1,1)'));
-    superpixels = superpixels';
+[im_rec,im_rec1]=deal(zeros(m,n,3)); % allocation mémoire
+[im_bin,im_bin1]=deal(zeros(m,n));
+
+%%% KMEANS
+
+K = 200; % ordre de la segmentation (nombre de superpixels)
+lambda = 1; % scalaire de pondération
+im_mat(:,1:3) = im_mat(:,1:3).*(S/(lambda*K)); % Pondération couleur/position
+[idx,C] = kmeans(im_mat(:,:,1),K);
+superpixels = reshape(idx,size(im(:,:,1)')); % remet au format l'image
+superpixels = superpixels';
     
-    im_rec=zeros(m,n,3,nb_images);
-    im_bin=zeros(m,n,nb_images);
     
     
-    for i=1:1:m
-        for j=1:1:n
-            im_rec(i,j,:)=((lambda*K)/S)*fix(C(superpixels(i,j),1:3))/255;
-            im_bin(i,j) = 255*(int8(im_rec(i,j,1)>im_rec(i,j,3)));
-        end
+for i=1:1:m
+    for j=1:1:n
+        im_rec(i,j,:)=((lambda*K)/S)*fix(C(superpixels(i,j),1:3))/255; % converti les labels en couleurs
+        im_bin(i,j) = 255*(int8(im_rec(i,j,1)>im_rec(i,j,3))); % binarise l'image
     end
 end
-%%
-%im_rec = permute(im_rec,[2 1 3]);
 
-figure
-imshow(im_rec)
-mask = boundarymask(superpixels);
-% 
-% hold on
-% imshow(labeloverlay(im_rec,mask,'Transparency',0,'Colormap','autumn'))
-% 
-% imshow(mask);
-% 
-% colormap hsv
+
+%%% KMEANS PERSO
+
+[idx1,C1] = kmeans1(im_mat(:,:,1),K); % notre kmeans perso
+superpixels1 = reshape(idx1,size(im(:,:,1)')); % remet au format l'image
+superpixels1 = superpixels1';
+    
+    
+    
+for i=1:1:m
+    for j=1:1:n
+        im_rec1(i,j,:)=((lambda*K)/S)*fix(C(superpixels1(i,j),1:3))/255; % converti les labels en couleurs
+        im_bin1(i,j) = 255*(int8(im_rec1(i,j,1)>im_rec1(i,j,3))); % binarise l'image
+    end
+end
+
+
+figure('units','normalized','outerposition',[0 0 1 1]);
+sgtitle('Segmentation de l image');
+subplot(131)
+imshow(im(:,:,:,1),[])
+title('Image Originale')
+subplot(132)
+title('Image Segmentée')
+imshow(im_rec,[])
+subplot(133)
+title('Image Segmentée (fonction perso)')
+imshow(im_rec1,[])
+
+
+
+
+%%% COMPACITE - A DECOMMENTER POUR TESTER
 
 % rp = regionprops(superpixels,'Area','Perimeter');
-aires_sp = aires_superpixels(superpixels,K);
-permietre_sp = permietre_superpixels(superpixels,K);
-% compacite = [rp.Perimeter].^2./[rp.Area];
-compacite = permietre_sp.^2./aires_sp;
-
-%figure;
-
+% aires_sp = aires_superpixels(superpixels,K);
+% permietre_sp = permietre_superpixels(superpixels,K);
+% compacite = permietre_sp.^2./aires_sp;
+% 
+% 
+% 
+% figure('units','normalized','outerposition',[0 0 1 1]);
+% 
 % T = 1;
 % while (T <= max(compacite))
-%     seuil_compacite=4;
+%     seuil_compacite=T;
 %     superpixels_exterieurs = superpixels;
 %     superpixels_internes = superpixels;
 %     for i=1:length(compacite)
@@ -118,84 +136,86 @@ compacite = permietre_sp.^2./aires_sp;
 %     subplot(1,3,2); imshow(superpixels_exterieurs, []); title('Régions extérieures');
 %     subplot(1,3,3); imshow(superpixels_internes, []); title('Régions intérieures');
 %     drawnow
-%     pause(.2)
-%     T = T + 0.1;
+%     pause(.1)
+%     T = T + 0.2;
 % end
 
-BW = imbinarize(rgb2gray(im(:,:,:,1)),graythresh(im(:,:,:,1)));
 
-[xc,yc] = find_pixel_contour(im_bin);
-B = bwtraceboundary(im_bin,[xc,yc],'S');
 
-B(:,1) = sgolayfilt(B(:,1),3,13);
+
+%%% AXE MEDIAN 
+
+[xc,yc] = find_pixel_contour(im_bin); % trouve un pixel sur le contour
+B = bwtraceboundary(im_bin,[xc,yc],'S'); % détermine le contour. La fonction find_pixel_contour
+% trouve un pixel sur le contour supérieur, donc on va chercher "vers" le
+% sud.
+
+B(:,1) = sgolayfilt(B(:,1),3,13); % filtrage du contour
 B(:,2) = sgolayfilt(B(:,2),3,13);
-
-figure
-subplot(121)
-imshow(im(:,:,:,1))
-title('Image originale')
-subplot(122)
-imshow(im_bin)
-title('Image binarisée')
-hold on
-plot(B(:,2),B(:,1),'r');
 
 [vx,vy]= voronoi(B(:,2),B(:,1));
 i = 1;
-while (i <= length(vx))
+while (i <= length(vx)) % on enlève les sommets de voronoi qui sont en dehors de la forme
     if (round(vx(1,i)) < 1 || round(vy(1,i)) < 1 || round(vx(1,i)) > n || round(vy(1,i)) > m ...
             || round(vx(2,i)) < 1 || round(vy(2,i)) < 1 || round(vx(2,i)) > n || round(vy(2,i)) > m)
         vx(:,i) = [];
-        vy(:,i) = [];
+        vy(:,i) = []; % en dehors de la forme
     elseif (im_bin(round(vy(1,i)),round(vx(1,i))) == 0 || im_bin(round(vy(2,i)),round(vx(2,i))) == 0 ...
         || is_perimeter(im_bin,round(vy(1,i)),round(vx(1,i))) || is_perimeter(im_bin,round(vy(2,i)),round(vx(2,i))))
-        vx(:,i) = [];
+        vx(:,i) = []; % étape de filtrage, sur le périmètre
         vy(:,i) = [];
     else 
         i = i + 1;
     end
 end
 
-plot(vx,vy);
 
 
-% inside= inpolygon(vx,vy,[1 size(im_bin,2) size(im_bin,2) 1], [1 1 size(im_bin,1) size(im_bin,1)]);
-% U = [];
-% while i<length(inside)
-%     if inside(i) && inside(i+1)
-%         U = [U; vx(i) vy(i) vx(i+1) vy(i+1)];
+%%% AXE MEDIAN A PARTIR DE NOTRE KMEANS
+
+
+% 
+% [xc1,yc1] = find_pixel_contour(im_bin1); % trouve un pixel sur le contour
+% B1 = bwtraceboundary(im_bin1,[xc1,yc1],'S'); % détermine le contour. La fonction find_pixel_contour
+% % trouve un pixel sur le contour supérieur, donc on va chercher "vers" le
+% % sud.
+% 
+% B1(:,1) = sgolayfilt(B1(:,1),3,13); % filtrage du contour
+% B1(:,2) = sgolayfilt(B1(:,2),3,13);
+% [vx1,vy1]= voronoi(B1(:,2),B1(:,1));
+% i = 1;
+% while (i <= length(vx1)) % on enlève les sommets de voronoi qui sont en dehors de la forme
+%     if (round(vx1(1,i)) < 1 || round(vy1(1,i)) < 1 || round(vx1(1,i)) > n || round(vy1(1,i)) > m ...
+%             || round(vx1(2,i)) < 1 || round(vy1(2,i)) < 1 || round(vx1(2,i)) > n || round(vy1(2,i)) > m)
+%         vx1(:,i) = [];
+%         vy1(:,i) = []; % en dehors de la forme
+%     elseif (im_bin1(round(vy1(1,i)),round(vx1(1,i))) == 0 || im_bin1(round(vy1(2,i)),round(vx1(2,i))) == 0 ...
+%         || is_perimeter(im_bin1,round(vy1(1,i)),round(vx1(1,i))) || is_perimeter(im_bin1,round(vy1(2,i)),round(vx1(2,i))))
+%         vx1(:,i) = []; % étape de filtrage, sur le périmètre
+%         vy1(:,i) = [];
+%     else 
+%         i = i + 1;
 %     end
-%     i=i+1;
 % end
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% A COMPLETER                                             %
-% Binarisation de l'image à partir des superpixels        %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% ........................................................%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% A DECOMMENTER ET COMPLETER                              %
-% quand vous aurez les images segmentées                  %
-% Affichage des masques associes                          %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% chargement des masques (pour l'elimination des fonds bleus)
-% de taille nb_lignes x nb_colonnes x nb_images
-% Affichage des masques associes
-% figure;
-% subplot(2,2,1); A COMPLETER ; title('Masque image 1');
-% subplot(2,2,2); A COMPLETER ; title('Masque image 9');
-% subplot(2,2,3); A COMPLETER ; title('Masque image 17');
-% subplot(2,2,4); A COMPLETER ; title('Masque image 25');
-
-
-%%%%%%%%%%%%%%%
-% A COMPLETER %
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Calcul de l'axe médian %
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% ... 
+figure('units','normalized','outerposition',[0 0 1 1]);
+sgtitle('Calcul de l axe median')
+subplot(131)
+imshow(im(:,:,:,1))
+title('Image originale')
+subplot(132)
+imshow(im_bin)
+title('Image binarisée + axe médian')
+hold on
+plot(B(:,2),B(:,1),'r');
+hold on
+plot(vx,vy);
+subplot(133)
+imshow(im_bin1)
+title('Image binarisée + axe médian (fonction perso)')
+hold on
+plot(B1(:,2),B1(:,1),'r');
+hold on
+plot(vx1,vy1);

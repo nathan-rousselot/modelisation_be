@@ -1,5 +1,7 @@
 close all;clear;clc
 
+%%% Démonstration de l'axe médian sur toutes les images du dataset
+
 load("data\im.mat");
 load("data\im_bin.mat");
 load("data\im_rec.mat");

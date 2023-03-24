@@ -1,4 +1,6 @@
 function A = aires_superpixels(superpixels,K,m,n)
+%%% Calcul l'aire de tous les superpixels d'une image. Nécessaire pour le
+%%% calcul de la compacité.
     if (nargin < 2)
         K = max(superpixels);
     end

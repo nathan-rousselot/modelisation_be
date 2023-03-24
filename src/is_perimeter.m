@@ -1,4 +1,7 @@
 function b = is_perimeter(s,i,j,p,m,n)
+%%% Détermine si un pixel est sur le périmètre d'une forme ou non.
+%%% Possibilité de choisir quel voisinage (8 points ou 4 points) avec la
+%%% variable p. Toutefois, un voisinage 8 points est recommandé.
     if (nargin < 4)
         p = 8;
     end
